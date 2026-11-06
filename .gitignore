@@ -1,0 +1,49 @@
+# Unity generated
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Bb]uild/
+/[Bb]uilds/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Imported from the MediaPipe package (reference only, nothing depends on it)
+/Assets/Samples/
+/Assets/Samples.meta
+
+# IDE and project files
+.vscode/
+.vs/
+.idea/
+*.csproj
+*.sln
+*.slnx
+*.user
+*.suo
+
+# Assistant / tool config
+.claude/
+.mcp.json
+CLAUDE.md
+
+# Build output
+*.apk
+*.aab
+*.apks
+*.symbols.zip
+
+# Keys and secrets
+*.keystore
+*.jks
+*.pem
+*.p12
+*.key
+.env
+.env.*
+google-services.json
+
+# OS
+.DS_Store
+Thumbs.db
