@@ -1,0 +1,17 @@
+{
+    "name": "ArRingTryOn.HandTracking",
+    "rootNamespace": "ArRingTryOn.HandTracking",
+    "references": [
+        "ArRingTryOn.Core",
+        "Mediapipe.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

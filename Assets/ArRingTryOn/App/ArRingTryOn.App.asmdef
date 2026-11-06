@@ -1,0 +1,19 @@
+{
+    "name": "ArRingTryOn.App",
+    "rootNamespace": "ArRingTryOn.App",
+    "references": [
+        "ArRingTryOn.Core",
+        "ArRingTryOn.HandTracking",
+        "ArRingTryOn.Rendering",
+        "ArRingTryOn.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
