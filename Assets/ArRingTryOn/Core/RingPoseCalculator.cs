@@ -7,9 +7,10 @@ namespace ArRingTryOn.Core
     {
         /// <summary>
         /// Default for how far the ring sits along the first finger bone, from the knuckle (0)
-        /// to the next joint (1): just under halfway, clear of the webbing between the fingers.
+        /// to the next joint (1). Tuned on a phone: the knuckle landmark is the joint's centre,
+        /// below the visible webbing, so a ring looks right well past halfway.
         /// </summary>
-        public const float DefaultPositionAlongSegment = 0.475f;
+        public const float DefaultPositionAlongSegment = 0.7f;
 
         /// <summary>Finger diameter as a fraction of the spacing between neighbouring knuckles.</summary>
         public const float FingerWidthPerKnuckleSpacing = 0.9f;

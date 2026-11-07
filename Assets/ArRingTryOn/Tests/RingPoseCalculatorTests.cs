@@ -38,9 +38,9 @@ namespace ArRingTryOn.Tests
         }
 
         [Test]
-        public void DefaultPosition_IsJustUnderHalfwayUpTheFirstBone()
+        public void DefaultPosition_IsTheValueTunedOnDevice()
         {
-            Assert.That(Along, Is.InRange(0.45f, 0.5f));
+            Assert.That(Along, Is.EqualTo(0.7f));
         }
 
         [Test]
@@ -54,7 +54,8 @@ namespace ArRingTryOn.Tests
 
         [TestCase(0f)]
         [TestCase(0.35f)]
-        [TestCase(0.5f)]
+        [TestCase(0.475f)]
+        [TestCase(0.7f)]
         [TestCase(1f)]
         public void Position_CanBeTunedAlongTheBone(float along)
         {
