@@ -36,7 +36,7 @@ namespace ArRingTryOn.Core
             // Finger direction is in display widths with y down; view space has y up.
             var axis = new Vec3(finger.Direction.X, -finger.Direction.Y, finger.Direction.Z);
             var position = knuckle + axis * (finger.SegmentLength * PositionAlongSegment);
-            var rotation = BuildRotation(axis, BackOfHand(hand, displayAspect, isImageMirrored));
+            var rotation = BuildRotation(axis, BackOfFinger(hand, axis, displayAspect, isImageMirrored));
 
             pose = new RingPose(position, rotation, fingerSpacing * FingerWidthPerKnuckleSpacing);
             return true;
@@ -49,26 +49,26 @@ namespace ArRingTryOn.Core
             return ((knuckle - middle).Length + (knuckle - pinky).Length) * 0.5f;
         }
 
-        // The palm's winding from index to pinky gives its normal, and which way that normal
-        // faces depends on the shape the hand has in the image. A right hand has the same shape
-        // as a mirrored left hand.
-        private static Vec3 BackOfHand(HandLandmarks hand, float displayAspect, bool isImageMirrored)
+        // The finger bends about the line of knuckles, so crossing the finger with that line
+        // gives the back of the finger even when it curls. Which of the two sides that is depends
+        // on the hand's shape in the image: a right hand looks like a mirrored left hand.
+        private static Vec3 BackOfFinger(HandLandmarks hand, Vec3 axis, float displayAspect, bool isImageMirrored)
         {
-            var wrist = ViewSpace.FromDisplay(hand[HandLandmarkId.Wrist], displayAspect);
-            var index = ViewSpace.FromDisplay(hand[HandLandmarkId.IndexMcp], displayAspect) - wrist;
-            var pinky = ViewSpace.FromDisplay(hand[HandLandmarkId.PinkyMcp], displayAspect) - wrist;
-            var normal = Vec3.Cross(index, pinky);
+            var middle = ViewSpace.FromDisplay(hand[HandLandmarkId.MiddleMcp], displayAspect);
+            var pinky = ViewSpace.FromDisplay(hand[HandLandmarkId.PinkyMcp], displayAspect);
+            var acrossKnuckles = pinky - middle;
+            var side = Vec3.Cross(axis, acrossKnuckles);
 
             var hasRightHandShape = (hand.Side != HandSide.Left) != isImageMirrored;
-            return hasRightHandShape ? normal : normal * -1f;
+            return hasRightHandShape ? side : side * -1f;
         }
 
-        private static Quat BuildRotation(Vec3 axis, Vec3 backOfHand)
+        private static Quat BuildRotation(Vec3 axis, Vec3 backOfFinger)
         {
-            var top = RemoveComponent(backOfHand, axis);
+            var top = RemoveComponent(backOfFinger, axis);
             if (top.Length < MinLength)
             {
-                // The palm gives no usable roll, so fall back on any direction across the finger.
+                // The knuckles give no usable roll, so fall back on any direction across the finger.
                 top = RemoveComponent(new Vec3(0f, 0f, -1f), axis);
             }
 

@@ -212,11 +212,12 @@ namespace ArRingTryOn.Tests
         }
 
         [Test]
-        public void FlatPalmData_StillGivesAValidRotation()
+        public void KnucklesInLineWithFinger_StillGivesAValidRotation()
         {
-            // Wrist and knuckles in a line give no palm normal, so roll has to fall back.
+            // A knuckle line parallel to the finger gives no roll, so it has to fall back.
             var points = UprightRightHand();
-            points[(int)HandLandmarkId.Wrist] = new Vec3(0.05f, 0.5f, 0f);
+            points[(int)HandLandmarkId.MiddleMcp] = new Vec3(0.55f, 0.6f, 0f);
+            points[(int)HandLandmarkId.PinkyMcp] = new Vec3(0.55f, 0.3f, 0f);
 
             var pose = Calculate(points);
 
@@ -225,16 +226,30 @@ namespace ArRingTryOn.Tests
         }
 
         [Test]
-        public void PalmNormalAlongFinger_StillGivesAValidRotation()
+        public void FingerBentTowardsCamera_KeepsHeadOnBackOfFinger()
         {
+            // Bending the finger about the knuckle line turns its back from the camera to below it.
             var points = UprightRightHand();
             points[(int)HandLandmarkId.RingPip] = new Vec3(0.55f, 0.5f, -0.1f);
-            points[(int)HandLandmarkId.Wrist] = new Vec3(0.5f, 0.8f, 0f);
 
             var pose = Calculate(points);
 
             AssertVector(pose.Rotation.Rotate(RingAxis), TowardsCamera);
-            Assert.That(Vec3.Dot(pose.Rotation.Rotate(RingTop), TowardsCamera), Is.EqualTo(0f).Within(Tolerance));
+            AssertVector(pose.Rotation.Rotate(RingTop), new Vec3(0f, -1f, 0f));
+        }
+
+        [Test]
+        public void FingerCurledForward_HeadStaysOnBackOfFinger()
+        {
+            // A finger curled 60 degrees towards the palm, back of hand to camera.
+            var points = UprightRightHand();
+            var c = (float)Math.Cos(Math.PI / 3.0);
+            var s = (float)Math.Sin(Math.PI / 3.0);
+            points[(int)HandLandmarkId.RingPip] = new Vec3(0.55f, 0.5f - 0.1f * c, 0.1f * s);
+
+            var top = Calculate(points).Rotation.Rotate(RingTop);
+
+            AssertVector(top, new Vec3(0f, s, -c));
         }
 
         [Test]
