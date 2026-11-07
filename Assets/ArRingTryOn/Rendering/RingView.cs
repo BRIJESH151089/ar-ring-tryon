@@ -1,9 +1,11 @@
+using System;
+using System.Collections.Generic;
 using ArRingTryOn.Core;
 using UnityEngine;
 
 namespace ArRingTryOn.Rendering
 {
-    /// <summary>Draws the placeholder ring at the pose Core produces.</summary>
+    /// <summary>Draws the selected ring at the pose Core produces.</summary>
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class RingView : MonoBehaviour
     {
@@ -12,21 +14,39 @@ namespace ArRingTryOn.Rendering
         private const float RingDistance = 25f;
 
         [SerializeField] private Camera _camera;
-        [SerializeField] private float _majorRadius = 0.56f;
-        [SerializeField] private float _tubeRadius = 0.06f;
-        [SerializeField] private int _ringSegments = 64;
-        [SerializeField] private int _tubeSegments = 16;
+        [SerializeField] private StyleMaterials[] _materials = Array.Empty<StyleMaterials>();
 
+        private readonly Dictionary<RingStyle, Mesh> _meshes = new Dictionary<RingStyle, Mesh>();
+        private MeshFilter _filter;
         private MeshRenderer _renderer;
-        private Mesh _mesh;
         private float _worldUnitsPerDisplayWidth;
 
         private void Awake()
         {
-            _mesh = TorusMesh.Build(_majorRadius, _tubeRadius, _ringSegments, _tubeSegments);
-            GetComponent<MeshFilter>().sharedMesh = _mesh;
+            _filter = GetComponent<MeshFilter>();
             _renderer = GetComponent<MeshRenderer>();
             _renderer.enabled = false;
+
+            // Every style is built once up front, so switching rings costs nothing per frame.
+            foreach (RingStyle style in Enum.GetValues(typeof(RingStyle)))
+            {
+                _meshes[style] = RingModelFactory.Build(style);
+            }
+
+            SetStyle(RingStyle.PlainBand);
+        }
+
+        public void SetStyle(RingStyle style)
+        {
+            var mesh = _meshes[style];
+            var materials = MaterialsFor(style);
+            if (materials.Length != mesh.subMeshCount)
+            {
+                Debug.LogError($"{style} ring has {mesh.subMeshCount} parts but {materials.Length} materials.", this);
+            }
+
+            _filter.sharedMesh = mesh;
+            _renderer.sharedMaterials = materials;
         }
 
         /// <summary>Matches the ring's placement to the displayed camera image.</summary>
@@ -43,13 +63,12 @@ namespace ArRingTryOn.Rendering
             var units = _worldUnitsPerDisplayWidth;
             var position = pose.Position;
             var rotation = pose.Rotation;
-            var innerDiameter = 2f * (_majorRadius - _tubeRadius);
 
             var cameraTransform = _camera.transform;
             transform.SetPositionAndRotation(
                 cameraTransform.TransformPoint(position.X * units, position.Y * units, RingDistance + position.Z * units),
                 cameraTransform.rotation * new Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W));
-            transform.localScale = Vector3.one * (pose.Scale * units / innerDiameter);
+            transform.localScale = Vector3.one * (pose.Scale * units / (2f * RingModelFactory.InnerRadius));
 
             _renderer.enabled = true;
         }
@@ -59,9 +78,32 @@ namespace ArRingTryOn.Rendering
             _renderer.enabled = false;
         }
 
+        private Material[] MaterialsFor(RingStyle style)
+        {
+            foreach (var entry in _materials)
+            {
+                if (entry.Style == style)
+                {
+                    return entry.Materials;
+                }
+            }
+
+            return Array.Empty<Material>();
+        }
+
         private void OnDestroy()
         {
-            Destroy(_mesh);
+            foreach (var mesh in _meshes.Values)
+            {
+                Destroy(mesh);
+            }
+        }
+
+        [Serializable]
+        private struct StyleMaterials
+        {
+            public RingStyle Style;
+            public Material[] Materials;
         }
     }
 }
