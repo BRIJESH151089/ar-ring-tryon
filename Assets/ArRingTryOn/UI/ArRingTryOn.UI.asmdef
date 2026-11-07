@@ -3,7 +3,8 @@
     "rootNamespace": "ArRingTryOn.UI",
     "references": [
         "ArRingTryOn.Core",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
