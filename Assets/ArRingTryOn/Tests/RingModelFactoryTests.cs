@@ -14,27 +14,88 @@ namespace ArRingTryOn.Tests
 
         private static readonly RingStyle[] AllStyles = (RingStyle[])Enum.GetValues(typeof(RingStyle));
 
+        private static readonly RingBandSettings Band = RingBandSettings.Default;
+
+        private static readonly RingBandSettings[] BandVariety =
+        {
+            new RingBandSettings(0.06f, 0.1f),
+            RingBandSettings.Default,
+            new RingBandSettings(0.3f, 0.45f),
+        };
+
         [Test]
-        public void PlainBand_IsTheTorusSizedForTheFinger()
+        public void PlainBand_HasTheConfiguredThicknessAndWidth()
         {
             WithMesh(RingStyle.PlainBand, mesh =>
             {
                 var size = mesh.bounds.size;
-                Assert.That(size.x, Is.EqualTo(2f * 0.62f).Within(Tolerance));
-                Assert.That(size.y, Is.EqualTo(0.12f).Within(Tolerance));
-                Assert.That(size.z, Is.EqualTo(2f * 0.62f).Within(Tolerance));
+                var outerRadius = RingModelFactory.InnerRadius + Band.Thickness;
+                Assert.That(size.x, Is.EqualTo(2f * outerRadius).Within(Tolerance));
+                Assert.That(size.y, Is.EqualTo(Band.Width).Within(Tolerance));
+                Assert.That(size.z, Is.EqualTo(2f * outerRadius).Within(Tolerance));
                 Assert.That(mesh.subMeshCount, Is.EqualTo(1));
             });
         }
 
-        [TestCaseSource(nameof(AllStyles))]
-        public void Hole_FitsTheFingerExactly(RingStyle style)
+        [Test]
+        public void DefaultBand_IsASolidBandNotAWire()
         {
-            WithMesh(style, mesh =>
+            // The first band was 0.12 thick and 0.12 wide, which read as a thin wire in photos.
+            Assert.That(Band.Thickness, Is.GreaterThanOrEqualTo(0.15f));
+            Assert.That(Band.Width, Is.GreaterThanOrEqualTo(0.2f));
+        }
+
+        [Test]
+        public void Hole_FitsTheFingerExactlyForEveryStyleAndBand(
+            [ValueSource(nameof(AllStyles))] RingStyle style, [ValueSource(nameof(BandVariety))] RingBandSettings band)
+        {
+            WithMesh(style, band, mesh =>
             {
                 var nearest = mesh.vertices.Min(v => new Vector2(v.x, v.z).magnitude);
                 Assert.That(nearest, Is.EqualTo(RingModelFactory.InnerRadius).Within(Tolerance));
             });
+        }
+
+        [Test]
+        public void ThickerBand_GrowsOutwardsOnly()
+        {
+            var thin = RingModelFactory.Build(RingStyle.PlainBand, new RingBandSettings(0.08f, 0.12f));
+            var thick = RingModelFactory.Build(RingStyle.PlainBand, new RingBandSettings(0.24f, 0.3f));
+            try
+            {
+                Assert.That(thick.bounds.size.x - thin.bounds.size.x, Is.EqualTo(2f * 0.16f).Within(Tolerance));
+                Assert.That(thick.bounds.size.y - thin.bounds.size.y, Is.EqualTo(0.18f).Within(Tolerance));
+            }
+            finally
+            {
+                Object.DestroyImmediate(thin);
+                Object.DestroyImmediate(thick);
+            }
+        }
+
+        [Test]
+        public void OutOfRangeBand_IsClampedRatherThanBroken()
+        {
+            WithMesh(RingStyle.PlainBand, new RingBandSettings(-1f, 5f), mesh =>
+            {
+                Assert.That(mesh.bounds.size.y, Is.EqualTo(RingBandSettings.MaxWidth).Within(Tolerance));
+                var nearest = mesh.vertices.Min(v => new Vector2(v.x, v.z).magnitude);
+                Assert.That(nearest, Is.EqualTo(RingModelFactory.InnerRadius).Within(Tolerance));
+            });
+        }
+
+        [Test]
+        public void GemstoneAndSignetBands_AreNoThinnerThanTheirShare(
+            [ValueSource(nameof(BandVariety))] RingBandSettings band)
+        {
+            // Underneath the finger each band shows its plain cross-section.
+            foreach (var (style, scale) in new[] { (RingStyle.Signet, 1f), (RingStyle.Gemstone, RingModelFactory.GemstoneBandScale) })
+            {
+                WithMesh(style, band, mesh =>
+                {
+                    Assert.That(-mesh.bounds.min.z, Is.EqualTo(RingModelFactory.InnerRadius + band.Thickness * scale).Within(Tolerance), $"{style}");
+                });
+            }
         }
 
         [TestCaseSource(nameof(AllStyles))]
@@ -97,9 +158,29 @@ namespace ArRingTryOn.Tests
                 var top = mesh.bounds.max.z;
                 var flatTop = mesh.vertices.Where((v, i) => v.z > top - Tolerance && mesh.normals[i].z > 0.999f).ToArray();
 
-                Assert.That(top, Is.GreaterThan(0.7f));
+                Assert.That(top, Is.GreaterThan(-mesh.bounds.min.z + 0.1f), "the face stands proud of the band");
                 Assert.That(flatTop.Max(v => v.x) - flatTop.Min(v => v.x), Is.GreaterThan(0.4f));
-                Assert.That(mesh.bounds.min.z, Is.EqualTo(-0.61f).Within(Tolerance), "band underneath stays slim");
+            });
+        }
+
+        [Test]
+        public void Heads_SitOnTopOfAThickBandInsteadOfSinkingIntoIt(
+            [ValueSource(nameof(BandVariety))] RingBandSettings band)
+        {
+            WithMesh(RingStyle.Gemstone, band, mesh =>
+            {
+                var vertices = mesh.vertices;
+                var gem = mesh.GetTriangles(RingModelFactory.GemSubmesh).Select(i => vertices[i]).ToArray();
+                var bandTop = RingModelFactory.InnerRadius + band.Thickness * RingModelFactory.GemstoneBandScale * 1.2f;
+
+                Assert.That(gem.Max(v => v.z) - bandTop, Is.GreaterThan(0.2f), "the stone stands above the band");
+                Assert.That(gem.Min(v => v.z), Is.LessThan(bandTop), "its point is seated in the band");
+            });
+
+            WithMesh(RingStyle.Signet, band, mesh =>
+            {
+                var bandTop = RingModelFactory.InnerRadius + band.Thickness + 0.06f;
+                Assert.That(mesh.bounds.max.z - bandTop, Is.EqualTo(0.07f).Within(Tolerance), "the face rises the same amount at any thickness");
             });
         }
 
@@ -114,7 +195,6 @@ namespace ArRingTryOn.Tests
 
                 Assert.That(gem.Length, Is.GreaterThan(0));
                 Assert.That(gem.Min(v => v.z), Is.GreaterThan(RingModelFactory.InnerRadius));
-                Assert.That(gem.Max(v => v.z), Is.EqualTo(0.88f).Within(Tolerance));
             });
         }
 
@@ -140,8 +220,10 @@ namespace ArRingTryOn.Tests
             {
                 var vertices = mesh.vertices;
                 var metalTop = mesh.GetTriangles(RingModelFactory.MetalSubmesh).Max(i => vertices[i].z);
+                var gemTop = mesh.GetTriangles(RingModelFactory.GemSubmesh).Max(i => vertices[i].z);
 
-                Assert.That(metalTop, Is.GreaterThan(0.8f));
+                // The girdle is 0.08 below the table.
+                Assert.That(metalTop, Is.GreaterThan(gemTop - 0.08f));
             });
         }
 
@@ -165,9 +247,11 @@ namespace ArRingTryOn.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => RingModelFactory.Build((RingStyle)99));
         }
 
-        private static void WithMesh(RingStyle style, Action<Mesh> check)
+        private static void WithMesh(RingStyle style, Action<Mesh> check) => WithMesh(style, Band, check);
+
+        private static void WithMesh(RingStyle style, RingBandSettings band, Action<Mesh> check)
         {
-            var mesh = RingModelFactory.Build(style);
+            var mesh = RingModelFactory.Build(style, band);
             try
             {
                 check(mesh);
