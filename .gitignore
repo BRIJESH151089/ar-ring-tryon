@@ -25,6 +25,7 @@
 
 # Assistant / tool config
 .claude/
+.claudeignore
 .mcp.json
 CLAUDE.md
 
