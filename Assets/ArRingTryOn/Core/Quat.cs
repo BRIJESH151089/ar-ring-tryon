@@ -18,6 +18,54 @@ namespace ArRingTryOn.Core
             W = w;
         }
 
+        public static Quat Identity => new Quat(0f, 0f, 0f, 1f);
+
+        public static float Dot(Quat a, Quat b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z + a.W * b.W;
+
+        /// <summary>The angle in radians of the rotation taking <paramref name="a"/> to <paramref name="b"/>.</summary>
+        public static float Angle(Quat a, Quat b)
+        {
+            var dot = Math.Min(Math.Abs(Dot(a, b)), 1f);
+            return 2f * (float)Math.Acos(dot);
+        }
+
+        /// <summary>Spherical interpolation along the shorter arc.</summary>
+        public static Quat Slerp(Quat a, Quat b, float t)
+        {
+            var dot = Dot(a, b);
+            if (dot < 0f)
+            {
+                b = new Quat(-b.X, -b.Y, -b.Z, -b.W);
+                dot = -dot;
+            }
+
+            float wa, wb;
+            if (dot > 0.9995f)
+            {
+                // Nearly equal: linear blending is accurate and avoids dividing by sin(0).
+                wa = 1f - t;
+                wb = t;
+            }
+            else
+            {
+                var theta = Math.Acos(dot);
+                var sin = Math.Sin(theta);
+                wa = (float)(Math.Sin((1f - t) * theta) / sin);
+                wb = (float)(Math.Sin(t * theta) / sin);
+            }
+
+            return new Quat(wa * a.X + wb * b.X, wa * a.Y + wb * b.Y, wa * a.Z + wb * b.Z, wa * a.W + wb * b.W).Normalized;
+        }
+
+        public Quat Normalized
+        {
+            get
+            {
+                var length = (float)Math.Sqrt(Dot(this, this));
+                return new Quat(X / length, Y / length, Z / length, W / length);
+            }
+        }
+
         /// <summary>The rotation taking the unit axes onto the given orthonormal basis, where z = x cross y.</summary>
         public static Quat FromBasis(Vec3 x, Vec3 y, Vec3 z)
         {

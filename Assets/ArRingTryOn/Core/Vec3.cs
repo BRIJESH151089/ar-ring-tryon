@@ -34,6 +34,8 @@ namespace ArRingTryOn.Core
 
         public static Vec3 operator *(Vec3 v, float s) => new Vec3(v.X * s, v.Y * s, v.Z * s);
 
+        public static Vec3 Lerp(Vec3 a, Vec3 b, float t) => a + (b - a) * t;
+
         public override string ToString() => $"({X}, {Y}, {Z})";
     }
 }
