@@ -79,7 +79,7 @@ namespace ArRingTryOn.Tests
 
             var tube = FingerTubeCalculator.Calculate(hand, aspect, pose.Scale);
 
-            var along = Vec3.Lerp(tube.Centres[1], tube.Centres[2], RingPoseCalculator.PositionAlongSegment);
+            var along = Vec3.Lerp(tube.Centres[1], tube.Centres[2], RingPoseCalculator.DefaultPositionAlongSegment);
             AssertVector(along, pose.Position);
         }
 

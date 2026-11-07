@@ -8,6 +8,7 @@ namespace ArRingTryOn.Tests
     {
         private const float Tolerance = 1e-4f;
         private const float WidthPerSpacing = RingPoseCalculator.FingerWidthPerKnuckleSpacing;
+        private const float Along = RingPoseCalculator.DefaultPositionAlongSegment;
 
         private static readonly Vec3 LocalX = new Vec3(1f, 0f, 0f);
         private static readonly Vec3 RingAxis = new Vec3(0f, 1f, 0f);
@@ -37,12 +38,54 @@ namespace ArRingTryOn.Tests
         }
 
         [Test]
-        public void StraightFinger_SitsNearTheBaseOfTheProximalPhalanx()
+        public void DefaultPosition_IsJustUnderHalfwayUpTheFirstBone()
+        {
+            Assert.That(Along, Is.InRange(0.45f, 0.5f));
+        }
+
+        [Test]
+        public void StraightFinger_SitsPartWayUpTheProximalPhalanx()
         {
             var pose = Calculate(UprightRightHand());
 
-            // 35% of the way from y=0.5 to y=0.4, then measured from the centre with y up.
-            AssertVector(pose.Position, new Vec3(0.05f, 0.035f, 0f));
+            // Part way from y=0.5 to y=0.4, then measured from the centre with y up.
+            AssertVector(pose.Position, new Vec3(0.05f, 0.1f * Along, 0f));
+        }
+
+        [TestCase(0f)]
+        [TestCase(0.35f)]
+        [TestCase(0.5f)]
+        [TestCase(1f)]
+        public void Position_CanBeTunedAlongTheBone(float along)
+        {
+            var points = UprightRightHand();
+            var hand = new HandLandmarks(points, HandSide.Right);
+
+            Assert.That(RingPoseCalculator.TryCalculate(hand, 1f, false, along, out var pose), Is.True);
+
+            AssertVector(pose.Position, new Vec3(0.05f, 0.1f * along, 0f));
+        }
+
+        [Test]
+        public void TuningPosition_LeavesRollAndScaleAlone()
+        {
+            var hand = new HandLandmarks(UprightRightHand(), HandSide.Right);
+            RingPoseCalculator.TryCalculate(hand, 1f, false, 0.2f, out var low);
+            RingPoseCalculator.TryCalculate(hand, 1f, false, 0.8f, out var high);
+
+            Assert.That(high.Scale, Is.EqualTo(low.Scale));
+            AssertVector(high.Rotation.Rotate(RingAxis), low.Rotation.Rotate(RingAxis));
+            AssertVector(high.Rotation.Rotate(RingTop), low.Rotation.Rotate(RingTop));
+        }
+
+        [TestCase(-0.01f)]
+        [TestCase(1.01f)]
+        [TestCase(float.NaN)]
+        public void Position_OutsideTheBoneIsRejected(float along)
+        {
+            var hand = new HandLandmarks(UprightRightHand(), HandSide.Right);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => RingPoseCalculator.TryCalculate(hand, 1f, false, along, out _));
         }
 
         [Test]
@@ -84,7 +127,7 @@ namespace ArRingTryOn.Tests
             var pose = Calculate(points);
 
             AssertVector(pose.Rotation.Rotate(RingAxis), TowardsCamera);
-            Assert.That(pose.Position.Z, Is.EqualTo(-0.035f).Within(Tolerance));
+            Assert.That(pose.Position.Z, Is.EqualTo(-0.1f * Along).Within(Tolerance));
         }
 
         [TestCase(0.5f)]
@@ -129,7 +172,7 @@ namespace ArRingTryOn.Tests
             var pose = Calculate(points, aspect);
 
             AssertVector(pose.Rotation.Rotate(RingAxis), RingAxis);
-            AssertVector(pose.Position, new Vec3(0.05f, 0.035f, 0f));
+            AssertVector(pose.Position, new Vec3(0.05f, 0.1f * Along, 0f));
             Assert.That(pose.Scale, Is.EqualTo(0.1f * WidthPerSpacing).Within(Tolerance));
         }
 

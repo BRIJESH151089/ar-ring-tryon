@@ -61,7 +61,7 @@ namespace ArRingTryOn.Tests
             for (var t = 1; t <= 6; t++)
             {
                 tracker.TryUpdate(Frame(t * 33, xOffset: 0.1f), out var pose, out var tube);
-                var onTube = Vec3.Lerp(tube.Centres[1], tube.Centres[2], RingPoseCalculator.PositionAlongSegment);
+                var onTube = Vec3.Lerp(tube.Centres[1], tube.Centres[2], tracker.PositionAlongSegment);
                 Assert.That((onTube - pose.Position).Length, Is.LessThan(0.002f), $"frame {t}: ring left the finger");
             }
         }
@@ -88,6 +88,37 @@ namespace ArRingTryOn.Tests
             tracker.TryUpdate(Frame(1000, xOffset: 0.2f), out var pose, out _);
             RingPoseCalculator.TryCalculate(Frame(1000, xOffset: 0.2f).Hands[0], 1f, false, out var raw);
             Assert.That((pose.Position - raw.Position).Length, Is.LessThan(1e-6f), "ring should not glide from the old spot");
+        }
+
+        [Test]
+        public void PositionAlongSegment_DefaultsToTheCalculatorsDefault()
+        {
+            Assert.That(new RingTracker(RingSmoothingSettings.Default).PositionAlongSegment,
+                Is.EqualTo(RingPoseCalculator.DefaultPositionAlongSegment));
+        }
+
+        [Test]
+        public void PositionAlongSegment_MovesTheRingButNotTheTube()
+        {
+            var tracker = new RingTracker(RingSmoothingSettings.Default) { PositionAlongSegment = 0.8f };
+
+            tracker.TryUpdate(Frame(0), out var pose, out var tube);
+
+            var expected = Vec3.Lerp(tube.Centres[1], tube.Centres[2], 0.8f);
+            Assert.That((pose.Position - expected).Length, Is.LessThan(1e-6f));
+            var defaultTube = FingerTubeCalculator.Calculate(Frame(0).Hands[0], 1f, pose.Scale);
+            Assert.That((tube.Centres[1] - defaultTube.Centres[1]).Length, Is.LessThan(1e-6f));
+        }
+
+        [TestCase(-0.5f, 0f)]
+        [TestCase(1.5f, 1f)]
+        [TestCase(float.NaN, RingPoseCalculator.DefaultPositionAlongSegment)]
+        public void PositionAlongSegment_IsKeptOnTheBone(float requested, float expected)
+        {
+            var tracker = new RingTracker(RingSmoothingSettings.Default) { PositionAlongSegment = requested };
+
+            Assert.That(tracker.PositionAlongSegment, Is.EqualTo(expected));
+            Assert.That(tracker.TryUpdate(Frame(0), out _, out _), Is.True);
         }
 
         [Test]

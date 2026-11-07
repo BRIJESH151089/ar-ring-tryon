@@ -8,6 +8,7 @@ namespace ArRingTryOn.Core
     {
         private readonly RingPoseFilter _poseFilter;
         private readonly Vec3OneEuroFilter[] _tubeFilters;
+        private float _positionAlongSegment = RingPoseCalculator.DefaultPositionAlongSegment;
 
         public RingTracker(RingSmoothingSettings settings)
         {
@@ -32,6 +33,16 @@ namespace ArRingTryOn.Core
             }
         }
 
+        /// <summary>
+        /// Where along the first finger bone the ring sits, from 0 (knuckle) to 1 (next joint).
+        /// Values outside that range are clamped.
+        /// </summary>
+        public float PositionAlongSegment
+        {
+            get => _positionAlongSegment;
+            set => _positionAlongSegment = float.IsNaN(value) ? RingPoseCalculator.DefaultPositionAlongSegment : Clamp01(value);
+        }
+
         /// <returns>
         /// False when there is no usable hand. Smoothing then starts afresh, so a returning hand
         /// does not drag the ring across from where it was last seen.
@@ -41,7 +52,7 @@ namespace ArRingTryOn.Core
             pose = default;
             tube = default;
             if (frame == null || frame.Hands.Count == 0
-                || !RingPoseCalculator.TryCalculate(frame.Hands[0], frame.DisplayAspect, frame.IsImageMirrored, out var raw))
+                || !RingPoseCalculator.TryCalculate(frame.Hands[0], frame.DisplayAspect, frame.IsImageMirrored, _positionAlongSegment, out var raw))
             {
                 Reset();
                 return false;
@@ -60,6 +71,8 @@ namespace ArRingTryOn.Core
             tube = new FingerTube(centres, rawTube.Radii);
             return true;
         }
+
+        private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
 
         public void Reset()
         {
