@@ -95,12 +95,13 @@ namespace ArRingTryOn.Tests
             Assert.That(view.FlipTextureV, Is.EqualTo(expectedV));
         }
 
-        [TestCase(false, HandSide.Left, HandSide.Right)]
-        [TestCase(false, HandSide.Right, HandSide.Left)]
+        [TestCase(false, HandSide.Left, HandSide.Left)]
+        [TestCase(false, HandSide.Right, HandSide.Right)]
+        [TestCase(true, HandSide.Left, HandSide.Right)]
+        [TestCase(true, HandSide.Right, HandSide.Left)]
+        [TestCase(true, HandSide.Unknown, HandSide.Unknown)]
         [TestCase(false, HandSide.Unknown, HandSide.Unknown)]
-        [TestCase(true, HandSide.Left, HandSide.Left)]
-        [TestCase(true, HandSide.Right, HandSide.Right)]
-        public void ResolveSide_SwapsLabelsOnlyForUnmirroredImages(bool front, HandSide reported, HandSide expected)
+        public void ResolveSide_SwapsLabelsOnlyForMirroredImages(bool front, HandSide reported, HandSide expected)
         {
             Assert.That(new CameraView(640, 480, 0, front, false).ResolveSide(reported), Is.EqualTo(expected));
         }

@@ -72,12 +72,12 @@ namespace ArRingTryOn.Core
         }
 
         /// <summary>
-        /// Corrects a reported hand side. The tracker labels hands assuming a mirrored image, so
-        /// its labels are swapped on an unmirrored (rear camera) image.
+        /// Turns a reported hand side into the user's real hand. The tracker labels a hand by how
+        /// it looks in the image it is given, so on a mirrored (selfie) image the label is swapped.
         /// </summary>
         public HandSide ResolveSide(HandSide reported)
         {
-            if (IsFrontFacing || reported == HandSide.Unknown)
+            if (!IsFrontFacing || reported == HandSide.Unknown)
             {
                 return reported;
             }
