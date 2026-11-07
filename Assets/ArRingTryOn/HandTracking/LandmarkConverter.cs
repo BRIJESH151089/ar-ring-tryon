@@ -11,7 +11,7 @@ namespace ArRingTryOn.HandTracking
     {
         public static HandFrame ToHandFrame(in HandLandmarkerResult result, CameraView view, long timestampMs)
         {
-            return new HandFrame(timestampMs, view.DisplayAspect, ToHands(result, view));
+            return new HandFrame(timestampMs, view.DisplayAspect, view.IsFrontFacing, ToHands(result, view));
         }
 
         private static IReadOnlyList<HandLandmarks> ToHands(in HandLandmarkerResult result, CameraView view)
