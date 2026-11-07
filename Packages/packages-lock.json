@@ -224,14 +224,14 @@
       "url": "https://packages.unity.com"
     },
     "com.yasirkula.nativegallery": {
-      "version": "https://github.com/yasirkula/UnityNativeGallery.git",
+      "version": "https://github.com/yasirkula/UnityNativeGallery.git#v1.9.5",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "6fdfae30629814b22b971453d87665d10e1c2ed4"
     },
     "com.yasirkula.nativeshare": {
-      "version": "https://github.com/yasirkula/UnityNativeShare.git",
+      "version": "https://github.com/yasirkula/UnityNativeShare.git#v1.5.5",
       "depth": 0,
       "source": "git",
       "dependencies": {},
