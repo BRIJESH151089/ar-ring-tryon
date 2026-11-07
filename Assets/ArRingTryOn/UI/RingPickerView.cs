@@ -59,10 +59,7 @@ namespace ArRingTryOn.UI
         // The app draws edge to edge, so lift the row clear of the gesture or navigation bar.
         private void KeepAboveSystemBar()
         {
-            var rectTransform = (RectTransform)transform;
-            var scaleFactor = GetComponentInParent<Canvas>().rootCanvas.scaleFactor;
-            var inset = Screen.safeArea.yMin / scaleFactor;
-            rectTransform.anchoredPosition = new Vector2(rectTransform.anchoredPosition.x, _bottomMargin + inset);
+            SafeArea.LiftAboveSystemBar((RectTransform)transform, _bottomMargin);
         }
 
         private void OnDestroy()
