@@ -12,13 +12,18 @@ namespace ArRingTryOn.App
         [SerializeField] private MediaPipeHandTracker _tracker;
         [SerializeField] private CameraFeedView _cameraFeed;
         [SerializeField] private RingView _ring;
+        [SerializeField] private FingerOccluderView _fingerOccluder;
         [SerializeField] private HandLandmarkOverlay _overlay;
         [SerializeField] private TrackingStatusLabel _status;
         [SerializeField] private RingPickerView _picker;
         [SerializeField] private DoubleTapGesture _overlayToggle;
         [SerializeField] private bool _showDebugOverlay = true;
 
+        [Tooltip("How the ring follows the hand. Changes apply live in Play mode.")]
+        [SerializeField] private RingSmoothingSettings _smoothing = RingSmoothingSettings.Default;
+
         private readonly RingCatalog _catalog = RingCatalog.CreateDefault();
+        private RingTracker _ringTracker;
         private RingSelection _selection;
         private bool _viewsConfigured;
         private HandFrame _shownFrame;
@@ -28,6 +33,7 @@ namespace ArRingTryOn.App
         {
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
+            _ringTracker = new RingTracker(_smoothing);
             _selection = new RingSelection(_catalog);
             _ring.SetStyle(_selection.Current.Style);
             _selection.Changed += OnRingSelected;
@@ -46,6 +52,7 @@ namespace ArRingTryOn.App
                 _cameraFeed.Show(_tracker.CameraTexture, _tracker.View);
                 _overlay.Configure(_tracker.View);
                 _ring.Configure(_tracker.View);
+                _fingerOccluder.Configure(_tracker.View);
                 _viewsConfigured = true;
             }
 
@@ -68,14 +75,24 @@ namespace ArRingTryOn.App
 
         private void PlaceRing(HandFrame frame)
         {
-            if (frame.Hands.Count > 0
-                && RingPoseCalculator.TryCalculate(frame.Hands[0], frame.DisplayAspect, frame.IsImageMirrored, out var pose))
+            if (_ringTracker.TryUpdate(frame, out var pose, out var fingerTube))
             {
+                _fingerOccluder.Show(fingerTube);
                 _ring.Show(pose);
             }
             else
             {
+                _fingerOccluder.Hide();
                 _ring.Hide();
+            }
+        }
+
+        private void OnValidate()
+        {
+            // Lets the smoothing be tuned from the Inspector while the app runs.
+            if (_ringTracker != null)
+            {
+                _ringTracker.Settings = _smoothing;
             }
         }
 
