@@ -5,7 +5,8 @@
         "ArRingTryOn.Core",
         "ArRingTryOn.HandTracking",
         "ArRingTryOn.Rendering",
-        "ArRingTryOn.UI"
+        "ArRingTryOn.UI",
+        "ArRingTryOn.Sharing"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
