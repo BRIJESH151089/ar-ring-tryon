@@ -3,6 +3,7 @@
     "rootNamespace": "ArRingTryOn.Tests",
     "references": [
         "ArRingTryOn.Core",
+        "ArRingTryOn.Rendering",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
