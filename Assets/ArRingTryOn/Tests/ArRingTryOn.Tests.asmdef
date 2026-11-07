@@ -4,6 +4,7 @@
     "references": [
         "ArRingTryOn.Core",
         "ArRingTryOn.Rendering",
+        "ArRingTryOn.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
