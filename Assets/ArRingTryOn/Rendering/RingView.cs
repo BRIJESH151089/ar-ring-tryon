@@ -12,10 +12,14 @@ namespace ArRingTryOn.Rendering
         [SerializeField] private Camera _camera;
         [SerializeField] private StyleMaterials[] _materials = Array.Empty<StyleMaterials>();
 
+        [Tooltip("Band metal for every ring style. Changes apply live in Play mode.")]
+        [SerializeField] private RingBandSettings _band = RingBandSettings.Default;
+
         private readonly Dictionary<RingStyle, Mesh> _meshes = new Dictionary<RingStyle, Mesh>();
         private ViewSpaceMapping _mapping;
         private MeshFilter _filter;
         private MeshRenderer _renderer;
+        private RingStyle _style = RingStyle.PlainBand;
 
         private void Awake()
         {
@@ -24,17 +28,13 @@ namespace ArRingTryOn.Rendering
             _renderer = GetComponent<MeshRenderer>();
             _renderer.enabled = false;
 
-            // Every style is built once up front, so switching rings costs nothing per frame.
-            foreach (RingStyle style in Enum.GetValues(typeof(RingStyle)))
-            {
-                _meshes[style] = RingModelFactory.Build(style);
-            }
-
+            BuildMeshes();
             SetStyle(RingStyle.PlainBand);
         }
 
         public void SetStyle(RingStyle style)
         {
+            _style = style;
             var mesh = _meshes[style];
             var materials = MaterialsFor(style);
             if (materials.Length != mesh.subMeshCount)
@@ -79,12 +79,39 @@ namespace ArRingTryOn.Rendering
             return Array.Empty<Material>();
         }
 
-        private void OnDestroy()
+        // Every style is built once up front, so switching rings costs nothing per frame.
+        private void BuildMeshes()
+        {
+            DestroyMeshes();
+            foreach (RingStyle style in Enum.GetValues(typeof(RingStyle)))
+            {
+                _meshes[style] = RingModelFactory.Build(style, _band);
+            }
+        }
+
+        private void DestroyMeshes()
         {
             foreach (var mesh in _meshes.Values)
             {
                 Destroy(mesh);
             }
+
+            _meshes.Clear();
+        }
+
+        private void OnValidate()
+        {
+            // Rebuild when the band is tuned from the Inspector while the app runs.
+            if (Application.isPlaying && _filter != null)
+            {
+                BuildMeshes();
+                SetStyle(_style);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            DestroyMeshes();
         }
 
         [Serializable]
