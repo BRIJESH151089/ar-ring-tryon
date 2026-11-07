@@ -19,6 +19,9 @@ namespace ArRingTryOn.App
         [SerializeField] private DoubleTapGesture _overlayToggle;
         [SerializeField] private bool _showDebugOverlay = true;
 
+        [Tooltip("Where the ring sits on the first finger bone: 0 at the knuckle, 1 at the next joint. Applies live in Play mode.")]
+        [SerializeField, Range(0f, 1f)] private float _ringPositionAlongFinger = RingPoseCalculator.DefaultPositionAlongSegment;
+
         [Tooltip("How the ring follows the hand. Changes apply live in Play mode.")]
         [SerializeField] private RingSmoothingSettings _smoothing = RingSmoothingSettings.Default;
 
@@ -33,7 +36,7 @@ namespace ArRingTryOn.App
         {
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
-            _ringTracker = new RingTracker(_smoothing);
+            _ringTracker = new RingTracker(_smoothing) { PositionAlongSegment = _ringPositionAlongFinger };
             _selection = new RingSelection(_catalog);
             _ring.SetStyle(_selection.Current.Style);
             _selection.Changed += OnRingSelected;
@@ -89,10 +92,11 @@ namespace ArRingTryOn.App
 
         private void OnValidate()
         {
-            // Lets the smoothing be tuned from the Inspector while the app runs.
+            // Lets placement and smoothing be tuned from the Inspector while the app runs.
             if (_ringTracker != null)
             {
                 _ringTracker.Settings = _smoothing;
+                _ringTracker.PositionAlongSegment = _ringPositionAlongFinger;
             }
         }
 

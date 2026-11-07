@@ -263,6 +263,7 @@ MonoBehaviour:
   _picker: {fileID: 2081450632}
   _overlayToggle: {fileID: 267875580}
   _showDebugOverlay: 1
+  _ringPositionAlongFinger: 0.475
   _smoothing:
     Position:
       MinCutoff: 1.5
