@@ -4,6 +4,8 @@ An Android app that puts a virtual ring on your finger in real time. It tracks y
 
 Solo portfolio project. Design, integration and testing by me; built with [Claude Code](https://claude.com/claude-code) assistance.
 
+[![Watch the demo](https://img.shields.io/badge/▶_Watch_the_Demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/TzItExuGbWg)
+
 ## Screenshots
 
 | Gold band | Signet | Gemstone |
